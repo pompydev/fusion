@@ -1,3 +1,4 @@
+import { listItems } from '$lib/api/item';
 import { listFeeds } from '$lib/api/feed';
 import { allGroups } from '$lib/api/group';
 import { globalState } from '$lib/state.svelte';
@@ -15,6 +16,7 @@ export const load: LayoutLoad = async () => {
 	});
 	return {
 		feeds,
-		groups
+		groups,
+		unreadCount: (await listItems({ unread: true })).total
 	};
 };

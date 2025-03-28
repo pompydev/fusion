@@ -29,9 +29,10 @@
 	interface Props {
 		feeds: Promise<Feed[]>;
 		groups: Promise<Group[]>;
+		unreadCount: number;
 	}
 
-	let { feeds, groups }: Props = $props();
+	let { feeds, groups, unreadCount }: Props = $props();
 
 	let feedList = $derived.by(async () => {
 		const [feedsData, groupsData] = await Promise.all([feeds, groups]);
@@ -58,11 +59,19 @@
 	type SystemNavLink = {
 		label: string;
 		url: string;
+		count?: number;
 		icon: typeof Icon;
 		shortcut: string;
 	};
-	const systemLinks: SystemNavLink[] = [
-		{ label: t('common.unread'), url: '/', icon: Inbox, shortcut: shortcuts.gotoUnreadPage.keys },
+
+	let systemLinks = $derived<SystemNavLink[]>([
+		{
+			label: t('common.unread'),
+			url: '/',
+			icon: Inbox,
+			shortcut: shortcuts.gotoUnreadPage.keys,
+			count: unreadCount
+		},
 		{
 			label: t('common.bookmark'),
 			url: '/bookmarks',
@@ -82,7 +91,7 @@
 			icon: Settings,
 			shortcut: shortcuts.gotoSettingsPage.keys
 		}
-	];
+	]);
 
 	function isHighlight(url: string): boolean {
 		let chunks = page.url.pathname.split('/');
@@ -185,15 +194,31 @@
 		<ul class="menu w-full font-medium">
 			{#each systemLinks as v}
 				<li>
-					<a href={v.url} use:shortcut={v.shortcut} class={isHighlight(v.url) ? 'menu-active' : ''}>
-						<v.icon class="size-4" /><span>{v.label}</span>
+					<a
+						href={v.url}
+						use:shortcut={v.shortcut}
+						class:menu-active={isHighlight(v.url)}
+						class="flex justify-between"
+					>
+						<div class="flex items-center gap-2">
+							<v.icon class="size-4" /><span>{v.label}</span>
+						</div>
+						{#if v.count}
+							<div class="text-slate-400">{v.count}</div>
+						{/if}
 					</a>
 				</li>
 			{/each}
 		</ul>
 
 		<ul class="menu w-full">
-			<li class="menu-title">{t('common.feeds')}</li>
+			<li class="menu-title">
+				{#await feeds}
+					{t('common.feeds')}
+				{:then feeds}
+					{feeds.length > 1 ? `${feeds.length} ` : ''}{t('common.feeds')}
+				{/await}
+			</li>
 			{#await feedList}
 				<div class="skeleton bg-base-300 h-10"></div>
 			{:then groupData}
