@@ -2,8 +2,15 @@
 FROM node:23 AS fe
 WORKDIR /src
 RUN npm i -g pnpm
-COPY .git .git/
 COPY frontend ./frontend
+
+# coolify can't build without this
+RUN git config --global user.email "pompydev@proton.me"
+RUN git config --global user.name "pompydev"
+RUN git init
+RUN git add .
+RUN git commit -m "a"
+
 COPY scripts.sh .
 RUN ./scripts.sh build-frontend
 
